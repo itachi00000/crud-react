@@ -19,8 +19,9 @@ function Table({
   // nextId is the id at 'addUser row',
   // which will be the id for 'newUser'
   // if there is no data item, set the 'nextId' to 1
-  const nextId = users.length ? +users[users.length - 1].id + 1 : 1;
-  const hasAlert = alerts.isLoading || alerts.isEmpty || alerts.isError;
+  // const nextId = users.length ? +users[users.length - 1].id + 1 : 1;
+  const hasAlert =
+    alerts.isLoading || alerts.isEmpty || alerts.isError || alerts.isSuccess;
   return (
     <div className="container">
       <div className="card mx-auto w-75">
@@ -74,7 +75,7 @@ function Table({
                   </tr>
                 )}
 
-                <AddRow nextId={nextId} addUser={addUser} />
+                <AddRow addUser={addUser} />
               </tbody>
             </table>
           </form>

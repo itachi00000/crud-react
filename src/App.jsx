@@ -9,7 +9,6 @@ import Back from './components/Back';
 import ReadPage from './pages/ReadPage';
 import ErrorPage from './pages/ErrorPage';
 import HomePage from './pages/HomePage';
-// import Lifecycles from './components/lifecycles';
 
 export default function App() {
   return (

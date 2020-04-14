@@ -1,25 +1,26 @@
 import React from 'react';
-import uuid from 'uuid';
+import axios from 'axios';
+// import uuid from 'uuid';
 
-import userData from '../users.json';
 import Table from './Table';
-
-// import Lifecycles from './components/lifecycles';
+// import userData from '../users.json';
+// import Loading from './Loading';
 
 class Main extends React.Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
+      users: [],
+      searchfield: '',
+      // alerts, status
       status: { isEditing: false, currentId: null },
       alerts: {
         isLoading: false,
         isEmpty: false,
         isError: false,
+        isSuccess: false,
         alertMsg: ''
-      },
-      users: userData,
-      // users: [],
-      searchfield: ''
+      }
     };
     this.onSearchChange = this.onSearchChange.bind(this);
     this.onDelUser = this.onDelUser.bind(this);
@@ -34,16 +35,18 @@ class Main extends React.Component {
         alerts: { ...prevState.alerts, isLoading: true, alertMsg: 'Loading...' }
       };
     });
-    fetch('https://jsonplaceholder.typicode.com/users')
-      .then(response => response.json())
-      .then(userData =>
+
+    axios
+      .get('http://127.0.0.1:5000/robots')
+      .then(users =>
         this.setState(prevState => {
           return {
-            users: userData,
+            users: users.data,
             alerts: {
               ...prevState.alerts,
               isLoading: false,
-              alertMsg: ''
+              isSuccess: true,
+              alertMsg: 'Fetch Success'
             }
           };
         })
@@ -60,7 +63,26 @@ class Main extends React.Component {
           };
         })
       );
+
+    setTimeout(() => {
+      this.setState(prevState => {
+        return {
+          alerts: {
+            ...prevState.alerts,
+            isSuccess: false,
+            alertMsg: ''
+          }
+        };
+      });
+    }, 1500);
   }
+
+  // componentDidUpdate(prevState) {
+  //   if (prevState.users !== this.state.users) {
+  //     // this.fetchData();
+  //     console.log('a');
+  //   }
+  // }
 
   onSearchChange(e) {
     this.setState({ searchfield: e.target.value });
@@ -69,12 +91,19 @@ class Main extends React.Component {
   onDelUser(e, id) {
     // on editing mode, you cant click delete btn
     if (this.state.status.isEditing) return;
+    console.log(id);
 
-    this.setState(prevState => {
-      return { users: prevState.users.filter(user => user.id !== id) };
-    });
+    axios
+      .delete('http://localhost:5000/robots', { data: { id } })
+      .then(resp => {
+        this.setState(prevState => {
+          return { users: prevState.users.filter(user => user.id !== id) };
+        });
+      })
+      .catch(err => console.error('error at delUser: ', err));
   }
 
+  // UI
   onEditUser(e, id) {
     // toggles the 'isEditing'
     this.setState(prevState => {
@@ -88,60 +117,88 @@ class Main extends React.Component {
   }
 
   onUpdateUser(e, { id, name, username, email }) {
-    if (!name.trim() || !name) {
+    // if blank inputs
+    if (!name || !email || !username) {
       this.setState(prevState => {
         return {
-          alerts: { ...prevState, isEmpty: true, alertMsg: 'Enter Text' }
+          alerts: { ...prevState.alerts, isEmpty: true, alertMsg: 'Enter Text' }
         };
       });
       return;
     }
 
-    // updating the data (users)
-    this.setState(prevState => {
-      const updatedUsers = prevState.users.map(user => {
-        if (user.id === id) {
-          // eslint-disable-next-line no-param-reassign
-          user = { id, name, username, email };
-        }
-        return user;
-      });
-      return {
-        users: updatedUsers,
-        alerts: { ...prevState, isEmpty: false, alertMsg: 'Enter Text' }
-      };
-    });
+    // PUT method
+    axios
+      .put('http://localhost:5000/robots', { id, name, username, email })
+      .then(userUpd => {
+        this.setState(prevState => {
+          const updatedUsers = prevState.users.map(user => {
+            if (user.id === id) {
+              user = { id, name, username, email };
+            }
+            return user;
+          });
 
-    // reset the status to default
-    this.setState({ status: { isEditing: false, currentId: null } });
+          return {
+            users: updatedUsers,
+            alerts: {
+              ...prevState.alerts,
+              isEmpty: false,
+              isSuccess: true,
+              alertMsg: 'Edit Success'
+            }
+          };
+        });
+
+        // reset the status to default
+        this.setState({ status: { isEditing: false, currentId: null } });
+      })
+      .catch(err => console.error('error at /updateUser: ', err));
   }
 
-  onAddUser(e, { name, username, email, nextId }) {
-    if (!name.trim() || !name) {
+  onAddUser(e, { name, username, email }) {
+    // if empty inputs
+    if (!name || !username || !email) {
       this.setState(prevState => {
         return {
-          alerts: { ...prevState, isEmpty: true, alertMsg: 'Enter Text' }
+          alerts: {
+            ...prevState.alerts,
+            isEmpty: true,
+            isError: false,
+            alertMsg: 'Enter Text'
+          }
         };
       });
       return;
     }
 
-    const newUser = {
-      key: uuid.v4(),
-      id: nextId,
-      name,
-      username,
-      email
-    };
-
-    this.setState(prevState => {
-      return {
-        users: [...prevState.users, newUser],
-        alerts: { ...prevState, isEmpty: false, alertMsg: 'Enter Text' }
-      };
-    });
+    axios
+      .post('http://127.0.0.1:5000/robots', {
+        name,
+        username,
+        email
+      })
+      .then(newUser =>
+        this.setState(prevState => {
+          return {
+            users: [...prevState.users, newUser],
+            alerts: {
+              ...prevState.alerts,
+              isEmpty: false,
+              isError: false
+            }
+          };
+        }, this.fetchData())
+      )
+      .catch(() => console.error('error at addUser'));
   }
 
+  // fetch data
+  fetchData() {
+    // fetch('https://jsonplaceholder.typicode.com/users')
+  }
+
+  // render
   render() {
     const {
       users,
@@ -150,10 +207,20 @@ class Main extends React.Component {
       alerts
     } = this.state;
 
+    // loading if no data
+    // if (!users.length) {
+    //   return (
+    //     <div className="container">
+    //       <Loading />
+    //     </div>
+    //   );
+    // }
+
+    // filter based on searchQuery
     const filteredUsers = users.filter(user => {
       return user.name.toLowerCase().includes(searchfield.toLowerCase().trim());
     });
-    console.log('warning');
+
     return (
       <main>
         <Table
@@ -167,7 +234,6 @@ class Main extends React.Component {
           editing={isEditing}
           currentId={currentId}
         />
-        {/* <Lifecycles /> */}
         <div style={{ height: '300px' }} />
       </main>
     );
