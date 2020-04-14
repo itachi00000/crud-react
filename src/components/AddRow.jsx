@@ -22,10 +22,10 @@ export default class AddRow extends React.Component {
 
   handleClick(e) {
     e.preventDefault();
-    const { nextId, addUser } = this.props;
+    const { addUser } = this.props;
     const { name, username, email } = this.state;
 
-    addUser(e, { name, username, email, nextId });
+    addUser(e, { name, username, email });
 
     // reset this.state, after clicked
     this.setState({
@@ -51,12 +51,11 @@ export default class AddRow extends React.Component {
   // }
 
   render() {
-    const { nextId } = this.props;
     const { name, username, email } = this.state;
 
     return (
       <tr>
-        <td>{nextId}</td>
+        <td> </td>
         <td>
           <input
             onChange={this.handleChange}
