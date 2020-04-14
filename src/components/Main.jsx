@@ -1,10 +1,20 @@
 import React from 'react';
 import axios from 'axios';
+<<<<<<< HEAD
 // import uuid from 'uuid';
 
 import Table from './Table';
 // import userData from '../users.json';
 // import Loading from './Loading';
+=======
+import uuid from 'uuid';
+
+// import userData from '../users.json';
+import Table from './Table';
+import Loading from './Loading';
+
+// import Lifecycles from './components/lifecycles';
+>>>>>>> 11253bb8713e0a83d599254a1cdb4ca782330eb2
 
 class Main extends React.Component {
   constructor(props) {
@@ -27,6 +37,7 @@ class Main extends React.Component {
     this.onAddUser = this.onAddUser.bind(this);
     this.onEditUser = this.onEditUser.bind(this);
     this.onUpdateUser = this.onUpdateUser.bind(this);
+    this.fetchData = this.fetchData.bind(this);
   }
 
   componentDidMount() {
@@ -181,7 +192,10 @@ class Main extends React.Component {
       .then(newUser =>
         this.setState(prevState => {
           return {
+<<<<<<< HEAD
             users: [...prevState.users, newUser],
+=======
+>>>>>>> 11253bb8713e0a83d599254a1cdb4ca782330eb2
             alerts: {
               ...prevState.alerts,
               isEmpty: false,
@@ -196,6 +210,48 @@ class Main extends React.Component {
   // fetch data
   fetchData() {
     // fetch('https://jsonplaceholder.typicode.com/users')
+<<<<<<< HEAD
+=======
+    axios
+      .get('http://127.0.0.1:5000/robots')
+      .then(users =>
+        this.setState(prevState => {
+          return {
+            users: users.data,
+            alerts: {
+              ...prevState.alerts,
+              isLoading: false,
+              isSuccess: true,
+              alertMsg: 'Fetch Success'
+            }
+          };
+        })
+      )
+      .catch(error =>
+        this.setState(prevState => {
+          return {
+            alerts: {
+              ...prevState.alerts,
+              isError: true,
+              isLoading: false,
+              alertMsg: error.message
+            }
+          };
+        })
+      );
+
+    setTimeout(() => {
+      this.setState(prevState => {
+        return {
+          alerts: {
+            ...prevState.alerts,
+            isSuccess: false,
+            alertMsg: ''
+          }
+        };
+      });
+    }, 1500);
+>>>>>>> 11253bb8713e0a83d599254a1cdb4ca782330eb2
   }
 
   // render
