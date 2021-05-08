@@ -1,21 +1,15 @@
 import React from 'react';
 import axios from 'axios';
-<<<<<<< HEAD
 // import uuid from 'uuid';
 
 import Table from './Table';
 // import userData from '../users.json';
 // import Loading from './Loading';
-=======
-import uuid from 'uuid';
 
-// import userData from '../users.json';
-import Table from './Table';
-import Loading from './Loading';
+// jsonplaceholder
+const fakeApiUrl = 'https://jsonplaceholder.typicode.com';
 
-// import Lifecycles from './components/lifecycles';
->>>>>>> 11253bb8713e0a83d599254a1cdb4ca782330eb2
-
+// main
 class Main extends React.Component {
   constructor(props) {
     super(props);
@@ -37,7 +31,6 @@ class Main extends React.Component {
     this.onAddUser = this.onAddUser.bind(this);
     this.onEditUser = this.onEditUser.bind(this);
     this.onUpdateUser = this.onUpdateUser.bind(this);
-    this.fetchData = this.fetchData.bind(this);
   }
 
   componentDidMount() {
@@ -47,8 +40,9 @@ class Main extends React.Component {
       };
     });
 
+    // get all?
     axios
-      .get('http://127.0.0.1:5000/robots')
+      .get(`${fakeApiUrl}/users`)
       .then(users =>
         this.setState(prevState => {
           return {
@@ -100,21 +94,41 @@ class Main extends React.Component {
   }
 
   onDelUser(e, id) {
+    const { status } = this.state;
+
     // on editing mode, you cant click delete btn
-    if (this.state.status.isEditing) return;
-    console.log(id);
+    if (status.isEditing) return;
+    console.log('deleted', id);
 
     axios
-      .delete('http://localhost:5000/robots', { data: { id } })
-      .then(resp => {
+      .delete(`${fakeApiUrl}/users/${id}`)
+      .then(() => {
         this.setState(prevState => {
           return { users: prevState.users.filter(user => user.id !== id) };
         });
       })
-      .catch(err => console.error('error at delUser: ', err));
+      .catch(err => {
+        if (err.response) {
+          console.log('err.response.data', err.response.data.msg);
+          console.log('err.response.status:', err.response.status);
+          this.setState(prevState => {
+            return {
+              alerts: {
+                ...prevState.alerts,
+                isError: true,
+                alertMsg: `${err.response.data}`
+              }
+            };
+          });
+        } else if (err.request) {
+          console.log('err.request', err.request);
+        } else {
+          console.log(`Error msg: ${err.message}`);
+        }
+      });
   }
 
-  // UI
+  //
   onEditUser(e, id) {
     // toggles the 'isEditing'
     this.setState(prevState => {
@@ -127,6 +141,7 @@ class Main extends React.Component {
     });
   }
 
+  // update user
   onUpdateUser(e, { id, name, username, email }) {
     // if blank inputs
     if (!name || !email || !username) {
@@ -138,16 +153,26 @@ class Main extends React.Component {
       return;
     }
 
-    // PUT method
-    axios
-      .put('http://localhost:5000/robots', { id, name, username, email })
-      .then(userUpd => {
-        this.setState(prevState => {
+    const asyncFetch = async () => {
+      try {
+        await axios.put(`${fakeApiUrl}/users/${id}`, {
+          name,
+          username,
+          email
+        });
+
+        return this.setState(prevState => {
           const updatedUsers = prevState.users.map(user => {
+            let newUser = null;
             if (user.id === id) {
-              user = { id, name, username, email };
+              newUser = {
+                id,
+                name,
+                username,
+                email
+              };
             }
-            return user;
+            return newUser || user;
           });
 
           return {
@@ -160,11 +185,58 @@ class Main extends React.Component {
             }
           };
         });
+      } catch (error) {
+        return console.log(error.message);
+      }
+    };
 
-        // reset the status to default
-        this.setState({ status: { isEditing: false, currentId: null } });
-      })
-      .catch(err => console.error('error at /updateUser: ', err));
+    asyncFetch();
+
+    // PUT method
+    // axios
+    //   .put(`http://localhost:5000/robots/${id}`, { name, username, email })
+    //   .then(userUpd => {
+    //     this.setState(prevState => {
+    //       const updatedUsers = prevState.users.map(user => {
+    //         let newUser = null;
+    //         if (user.id === id) {
+    //           newUser = {
+    //             id,
+    //             name,
+    //             username,
+    //             email
+    //           };
+    //         }
+
+    //         return newUser || user;
+    //       });
+
+    //       return {
+    //         users: updatedUsers,
+    //         alerts: {
+    //           ...prevState.alerts,
+    //           isEmpty: false,
+    //           isSuccess: true,
+    //           alertMsg: 'Edit Success'
+    //         }
+    //       };
+    //     });
+
+    //  reset the status to default
+    this.setState(prevState => ({
+      status: { ...prevState.status, isEditing: false, currentId: null }
+    }));
+
+    // timeout
+    setTimeout(() => {
+      this.setState(prevState => ({
+        alerts: {
+          ...prevState.alerts,
+          isSuccess: false,
+          alertMsg: ''
+        }
+      }));
+    }, 1500);
   }
 
   onAddUser(e, { name, username, email }) {
@@ -183,75 +255,69 @@ class Main extends React.Component {
       return;
     }
 
-    axios
-      .post('http://127.0.0.1:5000/robots', {
-        name,
-        username,
-        email
-      })
-      .then(newUser =>
-        this.setState(prevState => {
+    const asyncFunc = async () => {
+      try {
+        const newUser = await axios.post(`${fakeApiUrl}/users`, {
+          name,
+          username,
+          email
+        });
+        console.log(newUser.data);
+
+        return this.setState(prevState => {
           return {
-<<<<<<< HEAD
-            users: [...prevState.users, newUser],
-=======
->>>>>>> 11253bb8713e0a83d599254a1cdb4ca782330eb2
+            users: [...prevState.users, newUser.data],
             alerts: {
               ...prevState.alerts,
               isEmpty: false,
               isError: false
             }
           };
-        }, this.fetchData())
-      )
-      .catch(() => console.error('error at addUser'));
-  }
+        });
+      } catch (error) {
+        return console.log(error);
+      }
+    };
 
-  // fetch data
-  fetchData() {
-    // fetch('https://jsonplaceholder.typicode.com/users')
-<<<<<<< HEAD
-=======
-    axios
-      .get('http://127.0.0.1:5000/robots')
-      .then(users =>
-        this.setState(prevState => {
-          return {
-            users: users.data,
-            alerts: {
-              ...prevState.alerts,
-              isLoading: false,
-              isSuccess: true,
-              alertMsg: 'Fetch Success'
-            }
-          };
-        })
-      )
-      .catch(error =>
-        this.setState(prevState => {
-          return {
-            alerts: {
-              ...prevState.alerts,
-              isError: true,
-              isLoading: false,
-              alertMsg: error.message
-            }
-          };
-        })
-      );
+    asyncFunc();
 
-    setTimeout(() => {
-      this.setState(prevState => {
-        return {
-          alerts: {
-            ...prevState.alerts,
-            isSuccess: false,
-            alertMsg: ''
-          }
-        };
-      });
-    }, 1500);
->>>>>>> 11253bb8713e0a83d599254a1cdb4ca782330eb2
+    // axios
+    //   .post('http://127.0.0.1:5000/robots', {
+    //     name,
+    //     username,
+    //     email
+    //   })
+    //   .then(newUser => {
+    //     this.setState(prevState => {
+    //       return {
+    //         users: [...prevState.users, newUser.data],
+    //         alerts: {
+    //           ...prevState.alerts,
+    //           isEmpty: false,
+    //           isError: false
+    //         }
+    //       };
+    //     });
+    //   })
+    //   .catch(err => {
+    //     if (err.response) {
+    //       console.log('err.response.data', err.response.data.error);
+    //       console.log('err.response.status:', err.response.status);
+    //       this.setState(prevState => {
+    //         return {
+    //           alerts: {
+    //             ...prevState.alerts,
+    //             isError: true,
+    //             alertMsg: `${err.response.data.error}defaultError`
+    //           }
+    //         };
+    //       });
+    //     } else if (err.request) {
+    //       console.log('err.request', err.request);
+    //     } else {
+    //       console.log(`Error msg: ${err.message}`);
+    //     }
+    //   });
   }
 
   // render
@@ -263,17 +329,9 @@ class Main extends React.Component {
       alerts
     } = this.state;
 
-    // loading if no data
-    // if (!users.length) {
-    //   return (
-    //     <div className="container">
-    //       <Loading />
-    //     </div>
-    //   );
-    // }
-
     // filter based on searchQuery
     const filteredUsers = users.filter(user => {
+      // search at name and username
       return user.name.toLowerCase().includes(searchfield.toLowerCase().trim());
     });
 
